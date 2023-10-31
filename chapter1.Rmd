@@ -9,5 +9,36 @@
 date()
 
 ```
-The text continues here.
+## My experience with RStudio
+
+I feel fairly comfortable working with RStudio as it is one of the main tools I use daily. However, after browsing trough the "R for health Data Science" I feel there are several ways to use R. I tend to structure my code in rather different fashion. Perhaps the most striking difference is the use of pipeline. Example file uses pipelines everywhere! where as I tend to avoid it as i feel it makes the code hard to follow even if it would shorten and simplify the code. For example if we create random data frame with tree columns
+```{r}
+exampledata1=c(2,4,6,6,8,9,10)
+exampledata2=c(70.2,44.0,62.7,106.1,81.1,96.1,10.8)
+exampledata3=c(16,23,10,12,9,10,17)
+df=data.frame(exampledata1,exampledata2,exampledata3)
+print(df)
+```
+
+and we want to caluclate *mean* of the 3rd column, I would use following command:
+
+```{r}
+mean(df$exampledata3)
+```
+whereas excercise dataset would use command
+
+```{r}
+df$exampledata3 %>% mean()
+
+```
+Both ways lead to same results, even if syntax is different. 
+
+Another difference is plotting. Excercise uses *ggplot2* where I am used to use R base plots. I know ggplot2 is more versatile and widely used tool. How ever i find its logic confusing compared to base plots. I wish i will learn to use ggplot2 during this course.
+
+Overall i cannot say how well exercise set worked as crash course as most of this was already familiar to me. How ever the parts about ggplot2 was my favorite as it helped me to understand logic behind commands. Using markup is not familiar to me - i have only used Rscripts earlier.
+
+## GitHub repository
+
+ https://github.com/MannistoLauri/IODS-project.git
+
 

@@ -4,13 +4,20 @@ output:
   html_document:
     theme: cosmo
     toc: true
+    author: "Lauri Männistö"
     toc_depth: 2
     fig_caption: true
     fig_width: 6
     fig_height: 4
+  
 ---
 
 ***
+```{r load-packages, include=FALSE}
+library(dplyr)
+library(magrittr)
+library(knitr)
+```
 
 # Introduction to Open Data Science - Course Project
 
