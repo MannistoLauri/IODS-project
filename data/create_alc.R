@@ -44,7 +44,7 @@ for(col_name in free_cols) {
     alc[col_name] <- round(rowMeans(two_cols))
   } else { # else (if the first column vector was not numeric)...
     # add the first column vector to the alc data frame
-    alc[col_name] <- "change me!"
+    alc[col_name] <- first_col
   }
 }
 
@@ -60,3 +60,4 @@ alc <- mutate(alc, high_use = alc_use > 2)
 glimpse(alc)
  #write csv
 write.csv(x=alc, file="C:/Users/03196349/Work Folders/PhD opinnot/IODS/IODS-project/data/alcdata.csv")
+
