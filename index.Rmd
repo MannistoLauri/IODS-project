@@ -31,3 +31,8 @@ library(knitr)
 # This will include Chapter 1 (that is updated in its own file) in the document.
 ```
 
+***
+
+```{r child = "chapter3.Rmd"}
+# This will include Chapter 1 (that is updated in its own file) in the document.
+```
