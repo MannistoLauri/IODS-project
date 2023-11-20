@@ -1,0 +1,174 @@
+# Chapter 3: Linear regression
+
+**Disclaimer!** I have had super busy week and unfortunately I did not have enough time to really focus this week and I am coding this last minute before deadline. So if and when i have made typos and silly mistakes, please be patient and I am sorry.
+
+```{r}
+date()
+```
+## Data
+
+
+First step is to read the data created during the data wrangling part. In this case it is stored on my computer.
+
+```{r}
+alc=read.csv("C:/Users/03196349/Work Folders/PhD opinnot/IODS/IODS-project/data/alcdata.csv")
+head(alc)
+```
+
+Let's remove the first column "x" as it is duplicate of row numbers
+
+```{r}
+alc=alc[,-1]
+```
+
+Let's take a look on our data
+
+```{r}
+colnames(alc)
+```
+
+We have 35 columns describing information about students. Some variables describe background information. Variables G1, G2 and G3 decribes the grades of testsubjects. Alc_use tells how large is alcohol consumption and high use tells whether the consumption is high or not. 
+
+***
+The 4 variables i would like to choose are absence, G3, pstatus and age. I assume that high absence, low grades, broken families and older age is linked to high consumption of alcohol.
+
+
+First I would like to check how those variables are related to each other. But before that, let's instal some packages!
+```{r}
+
+library(tidyr); library(dplyr); library(ggplot2)
+
+```
+
+```{r}
+
+table(alc$Pstatus, alc$high_use)
+
+
+g1 <- ggplot(alc, aes(x = high_use, y = age))
+g2 <- ggplot(alc, aes(x = high_use, y = G3))
+g3 <- ggplot(alc, aes(x = high_use, y = absences))
+
+
+g1 + geom_boxplot()
+g2 + geom_boxplot()
+g3 + geom_boxplot()
+
+```
+Using tables and boxplots we can assume 
+
+* high consumption of alcohol is slightly more common in broken families
+* Young people use less alcohol
+* People with high grades have smaller alcohol consumption
+* people with high alcohol consumption are more often absence
+
+Therefore hypotheses presented seem to be correct. 
+
+
+***
+```{r}
+m <- glm(high_use ~ G3 + absences + age + Pstatus, data = alc, family = "binomial")
+summary(m)
+```
+According to the summary of created model only G3 and absences are statistically significant. Family status has only little to do with the alcohol consumption. More simple model would be better. For that we can use step-command that finds the model with smallest (=best) AIC score.  
+
+
+```{r}
+step(m)
+```
+
+In this case such model would have just 2 predictors: *absence and G3*. So let's create such model.
+
+```{r}
+m <- glm(high_use ~ G3 + absences, data = alc, family = "binomial")
+summary(m)
+```
+
+So according to he model the astimate for parameter G3 is -0.08, and parameter for absence is 0.084. intercept is -0.39. To calculate odds ratios, we use following command:
+
+```{r}
+OR <- coef(m) %>% exp
+OR
+```
+
+Ratios describe the change of predictable variable if the explainable variable is changed one unit. 
+
+```{r}
+CI=confint(m)
+CI
+
+```
+
+This provides 95% confidence intervals. 97.5 being the upper and 2.5 the lower interval.
+
+Hypothesis vise this would mean that age and family status does not have important role on does one consume high amounts of alcohol or not. And that high grades means less alcohol and hing absences is tied to high alcohol consumption. How eve it is unclear which one is the cause and which is the result.
+
+***
+
+
+```{r}
+alc = mutate(alc, probability = predict(m, type = "response"))
+alc = mutate(alc, prediction =probability>0.5)
+table(high_use = alc$high_use, prediction = alc$prediction)%>%prop.table()
+
+```
+
+model was good at predicting if high use is false. How ever it also often assumed high use of alcohol even tough actually it was not the case. 
+
+```{r}
+g <- ggplot(alc, aes(x = probability, y = high_use, col=prediction))
+
+# define the geom as points and draw the plot
+g+geom_point()
+
+```
+
+The visual representation shows that the model often assumes High use to be false even tough it actually would be true. 
+
+```{r}
+loss_func <- function(class, prob) {
+  n_wrong <- abs(class - prob) > 0.5
+  mean(n_wrong)
+}
+
+loss_func(alc$high_use,alc$probability)
+
+```
+
+The training error (the mean number of wrong predictions) is 0,28
+
+
+***
+
+```{r}
+library(boot)
+cv <- cv.glm(data = alc, cost = loss_func, glmfit = m, K = 10)
+
+# average number of wrong predictions in the cross validation
+cv$delta[1]
+```
+
+The average number of wrong predictions is 0,2811, which is a greater than error in exercise set (0.26). This means we have worse model than in exercise 3. Lets try to find better model.
+
+```{r}
+m2 <- glm(high_use ~ G3 + absences+ school + sex + address+ famsize + Pstatus + Medu + Fedu + Mjob + Fjob + reason + guardian + traveltime + studytime + schoolsup+ famsup+ activities + nursery + higher + internet + romantic + famrel + freetime + goout + health + failures + paid + absences + G1 + G2, data = alc, family = "binomial")
+summary(m2)
+step(m2)
+m3 <- glm(high_use ~ absences + sex + address + famsize + 
+    reason + guardian + studytime + activities + romantic + famrel + 
+    goout + health + paid, data = alc, family = "binomial")
+summary(m3)
+alc2 = mutate(alc, probability = predict(m3, type = "response"))
+alc = mutate(alc, prediction =probability>0.5)
+loss_func <- function(class, prob) {
+  n_wrong <- abs(class - prob) > 0.5
+  mean(n_wrong)
+}
+loss_func(alc$high_use,alc$probability)
+cv <- cv.glm(data = alc, cost = loss_func, glmfit = m, K = 10)
+cv$delta[1]
+```
+
+I tried to create as good model as possible by introducing all variable to a model and used step function to find model with smallest AIC ending up with model m3. How ever when calculating  the error, it was 0.2783. Just slightly smaller than on the original model. In addition, i am coding this late at night as the deadline is looming, so i must just give up and declare that i cannot find better model than on exercise 3.
+
+
