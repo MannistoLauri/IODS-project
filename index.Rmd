@@ -1,3 +1,4 @@
+
 ---
 title: "IODS course project"
 output:
@@ -41,4 +42,7 @@ library(knitr)
 
 ```{r child = "chapter4.Rmd"}
 # This will include Chapter 1 (that is updated in its own file) in the document.
+
+```
+
 ```

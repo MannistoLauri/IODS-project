@@ -62,7 +62,7 @@ boston_scaled <- dplyr::select(boston_scaled, -crim)
 boston_scaled <- data.frame(boston_scaled, crime)
 ```
 
-## divide data
+## Divide data
 
 ```{r}
 n <- nrow(boston_scaled)
@@ -169,7 +169,7 @@ The most influential variable is black on LD2. On LD1 it is hard to determine, b
 
 
 
-## super bonus!
+## Super bonus!
 
 ```{r}
 library(plotly)
