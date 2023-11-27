@@ -1,0 +1,189 @@
+# Chapter 4: Clustering and classification
+
+```{r}
+date()
+```
+
+## Data
+
+Let's import data. We will use **"Boston"** data from MASS package. 
+
+```{r}
+library(MASS)
+library(ggplot2)
+data("Boston")
+```
+
+Now we can explore how the data looks
+
+```{r}
+str(Boston)
+dim(Boston)
+```
+
+Dataset "Boston" has 506 observations and 14 variables. Most of the varables are numeric, but two are integrals. Variables of the data and their diecription are presented bellow.
+
+```{r,echo=FALSE}
+desc=c("per capita crime rate by town.", "proportion of residential land zoned for lots over 25,000 sq.ft", "proportion of non-retail business acres per town.", "Charles River dummy variable", "nitrogen oxides concentration", "average number of rooms per dwelling.", "proportion of owner-occupied units built prior to 1940.", "weighted mean of distances to five Boston employment centres.", "index of accessibility to radial highways.", "full-value property-tax rate per $10,000.", "pupil-teacher ratio by town.", "proportion of blacks by town", "lower status of the population", "median value of owner-occupied homes in $1000s." )
+tabledf=data.frame(colnames(Boston), desc)
+library(knitr)
+kable(tabledf, col.names = c("Variable", "Descripition"))
+```
+Summary of the data
+
+```{r,echo=FALSE}
+summary(Boston)
+```
+Here you can see the pair-wise comparisation of each variable. Matrix is fairly small in size but provides some visual insigts. 
+
+```{r,echo=FALSE}
+pairs(Boston)
+```
+One can see that some variables have little relationships (such as age and ptratio) whereas some have strong relationship (nox and dis). Correlation matrix could be easier to interpret.
+
+```{r,echo=FALSE}
+cor_matrix <- cor(Boston) 
+library(corrplot)
+corrplot(cor_matrix, method="circle")
+```
+
+##Scaling the data
+```{r}
+boston_scaled= scale(Boston)
+boston_scaled=as.data.frame(boston_scaled)
+summary(boston_scaled)
+```
+After scaling the mean of each variable is 0. So instead of absolute values the value suggests how far from the mean within that variable the observation is.
+
+```{r}
+bins <- quantile(boston_scaled$crim)
+crime <- cut(boston_scaled$crim, breaks = bins, include.lowest = TRUE, labels = c("low", "med_low", "med_high", "high"))
+boston_scaled <- dplyr::select(boston_scaled, -crim)
+boston_scaled <- data.frame(boston_scaled, crime)
+```
+
+## divide data
+
+```{r}
+n <- nrow(boston_scaled)
+ind <- sample(n,  size = n * 0.8)
+train <- boston_scaled[ind,]
+test <- boston_scaled[-ind,]
+
+```
+## Linear discriminant analysis
+
+
+```{r}
+lda.fit <- lda(crime ~ ., data = train)
+
+lda.arrows <- function(x, myscale = 1, arrow_heads = 0.1, color = "red", tex = 0.75, choices = c(1,2)){
+  heads <- coef(x)
+  graphics::arrows(x0 = 0, y0 = 0, 
+         x1 = myscale * heads[,choices[1]], 
+         y1 = myscale * heads[,choices[2]], col=color, length = arrow_heads)
+  text(myscale * heads[,choices], labels = row.names(heads), 
+       cex = tex, col=color, pos=3)
+}
+
+# target classes as numeric
+classes <- as.numeric(train$crime)
+
+# plot the lda results (select both lines and execute them at the same time!)
+plot(lda.fit, dimen = 2, col=classes, pch=classes)
+lda.arrows(lda.fit, myscale = 2)
+```
+Here we can find see what variables separates the data into different groups. It seems that rad has the greatest effect on LD1 where as nox has the greatest effect on LD2. If i interpret the graph correctly, access to high ways is linked to high crime rate and nitrogen oxides to medium high rates. 
+
+```{r}
+correct_classes <- test$crime
+test <- dplyr::select(test, -crime)
+lda.pred <- predict(lda.fit, newdata = test)
+table(correct = correct_classes, predicted = lda.pred$class)
+
+```
+In the most cases the model made correct predictions. Especially success rate on predicting high crime rate was good. Predicting medium low crimes seems to be the most difficult. How ever the predictions are not perfect: for example in one case the model predicted medium high crime rate even tough actual rate was low.  
+
+
+```{r}
+data(Boston)
+scal_bos=as.data.frame(scale(Boston))
+dist_eu <- dist(scal_bos)
+summary(dist_eu)
+
+```
+##K-means
+
+Let's calculate k-means
+
+```{r}
+km <- kmeans(scal_bos, centers = 5)
+summary(km)
+```
+How ever the means calculated above would be better if we would fing out the optimal number of clusetrs. So let us do that!
+
+```{r}
+k_max <- 10
+twcss <- sapply(1:k_max, function(k){kmeans(scal_bos, k)$tot.withinss})
+qplot(x = 1:k_max, y = twcss, geom = 'line')
+
+km <- kmeans(scal_bos, centers = 2)
+
+pairs(scal_bos, col = km$cluster)
+
+```
+It is hard to see what is going on, so let's take a closer look on some of interesting looking variables
+
+```{r}
+pairs(scal_bos[c(1,10)], col = km$cluster)
+pairs(scal_bos[c(1,7)], col = km$cluster)
+
+```
+For example on these two plots one can see clear clustering with crime and tax. High tax and high crime rate seems to create two different clusters. This suggests that there are less crime in  areas with high tax.
+
+It also seems that crime rate increases in with owner-occupied units built prior to 1940.
+
+***
+
+## Bonus!
+
+```{r}
+km <- kmeans(scal_bos, centers = 4)
+lda.fit <- lda(km$cluster ~ ., data = scal_bos)
+
+lda.arrows <- function(x, myscale = 1, arrow_heads = 0.1, color = "red", tex = 0.75, choices = c(1,2)){
+  heads <- coef(x)
+  graphics::arrows(x0 = 0, y0 = 0, 
+         x1 = myscale * heads[,choices[1]], 
+         y1 = myscale * heads[,choices[2]], col=color, length = arrow_heads)
+  text(myscale * heads[,choices], labels = row.names(heads), 
+       cex = tex, col=color, pos=3)
+}
+
+# plot the lda results (select both lines and execute them at the same time!)
+plot(lda.fit, dimen = 2, col=classes, pch=classes)
+lda.arrows(lda.fit, myscale = 2.5)
+```
+
+The most influential variable is black on LD2. On LD1 it is hard to determine, but it might be nox.
+
+
+
+## super bonus!
+
+```{r}
+library(plotly)
+model_predictors <- dplyr::select(train, -crime)
+lda.fit <- lda(crime ~ ., data = train)
+# check the dimensions
+dim(model_predictors)
+dim(lda.fit$scaling)
+# matrix multiplication
+matrix_product <- as.matrix(model_predictors) %*% lda.fit$scaling
+matrix_product <- as.data.frame(matrix_product)
+
+
+plot_ly(x = matrix_product$LD1, y = matrix_product$LD2, z = matrix_product$LD3, type= 'scatter3d', mode='markers', color= train$crime)
+```
+
+***
