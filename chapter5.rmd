@@ -1,0 +1,78 @@
+# Assigment 5: Dimensionality reduction techniques
+
+## Data and data manipulation
+
+Let's import the data!
+
+```{r}
+human=read.csv("C:/Users/03196349/Work Folders/PhD opinnot/IODS/IODS-project/data/human.csv")
+human=human[,-1]
+```
+
+Next we move country names to column names and take a look at the data
+
+```{r}
+library(tibble)
+library(GGally)
+library(dplyr)
+human=column_to_rownames(human, "Country")
+ggpairs(human)
+summary(human)
+```
+May of the variables are correlated with each other. i.e. life expectancy and education. How ever some variables have little correlation with each other such as labour force participation and secondary education.  
+***
+
+## PCA 
+
+```{r}
+pca_human= prcomp(human)
+biplot(pca_human, choices = 1:2, cex=c(1, 1), col=c("grey40", "red"))
+```
+ Without standardisation differnet scales makes graph impossible to read. Maximum value of GNI is so large, it dwarfs all other variables. Such we must standardize the variables. 
+
+```{r}
+human_std= scale(human)
+pca_human_std= prcomp(human_std)
+biplot(pca_human_std, choices = 1:2, cex=c(1, 1), col=c("gray40", "red"))
+```
+After standardization the graph is easier to interpret. Labo.FM has greatest effect on PC2. It is harder to say witch variable has greatest effect on PC1, perhaps edu.exp.  
+There are 3 separate groups. labo.fm and paril.F create the first group. They correlated but they are not correlated to any other variable. Variables Mat.Mor and Ado.Birth are correlated and create group 2. Group 3 is composed of the rest of variables. Variables in group 2 and 3 are negative correlated. This means that in countries with high education and high income decreases Maternal Mortality Ratio and Adolescent Birth Rate. In other words, those decrease as welfare increases. Group 1 suggests that Labor Force Participation Rate and female percent Representation in Parliament has little to do with income and education. Thus PC1 represents welfare (or as high welfare is in negative it represents the hardship). And PC2 represents variables that don't have correlation with that. PC2 could be more about equality. High % of labor suggests all genders are actively working outside home and high precent of females in parliament suggests that they females are active operators in society. 
+
+
+***
+
+## MCA
+
+```{r}
+tea = read.csv("https://raw.githubusercontent.com/KimmoVehkalahti/Helsinki-Open-Data-Science/master/datasets/tea.csv", stringsAsFactors = TRUE)
+str(tea)
+dim(tea)
+View(tea)
+```
+Lets see of there are NA values
+
+```{r}
+unique(is.na(tea))
+
+```
+
+no Na values
+
+
+```{r}
+library(FactoMineR)
+keep=c("home", "work", "tearoom", "friends", "resto", "pub")
+tea_loc_sex= select(tea, one_of(keep))
+mca <- MCA(tea_loc_sex, graph = FALSE)
+plot(mca, invisible=c("ind"), graph.type = "classic", cex=0.8)
+```
+I chose variables that represent where tea is consumed. It seems that people taht consume tea, consume it everywhere( work, restaurants, tearooms, pubs etc.). How ever it is interesting that "not home" variable has little correlation to other "not" answers. It seems that dimension 1 is more about "do you drink tea", but not home is clearly an outlier, as all other not-answers are bellow zero on dimension 1. Lets try other ploting options!
+
+```{r}
+plot(mca, invisible=c("ind"), graph.type = "ggplot", cex=0.8)
+```
+Using ggplot option, the graph is a lot clearer as the texts do not overlap as much. 
+
+That's all folks! 
+
+...
