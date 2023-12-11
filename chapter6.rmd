@@ -105,7 +105,7 @@ There seems to be one outlier in each group. Now in general we should be careful
 ```{r}
 RATSBOX1=RATSBOX[-which(RATSBOX$Group==3 & RATSBOX$mean<500),]
 RATSBOX1=RATSBOX1[-which(RATSBOX$Group==1 & RATSBOX$mean<250),]
-RATSBOX1=RATSBOX1[-which(RATSBOX$Group==2 & RATSBOX$mean>500),]
+RATSBOX1=RATSBOX1[-which(RATSBOX$Group==2 & RATSBOX$mean < 550),]
 
 ggplot(RATSBOX1, aes(x = Group, y = mean)) +
   geom_boxplot() +
@@ -113,13 +113,13 @@ ggplot(RATSBOX1, aes(x = Group, y = mean)) +
   scale_y_continuous(name = "mean(Weight)")
 
 ```
-Now there are no mor outliers. After removing the outliers it would be time to perform a t-test. How ever t-test would require 2 gopups and we have 3. That is an issue! To solve this we will abondon the t-test and move to anova.
+Now there are no more outliers. After removing the outliers it would be time to perform a t-test. How ever t-test would require 2 gopups and we have 3. That is an issue! To solve this we will abondon the t-test and move to anova.
 
 ```{r}
 summary(aov(mean ~ Group, data = RATSBOX1))
 
 ```
-It seems that the groups are significantly differrent.
+It seems that the groups are significantly different.
 
 Now we can move on to modelling! 
 ```{r}
@@ -180,7 +180,7 @@ summary(BPRS_ref1)
 ```
 According to the information criteria (AIC and BIC) the models are not too different. Still the treatment 2 is about 0.6 units larger than observation on treatment 1.
 
-We can compare the 2 previois models.
+We can compare the 2 previous models.
 ```{r}
 anova(BPRS_ref1, BPRS_ref)
 ```
